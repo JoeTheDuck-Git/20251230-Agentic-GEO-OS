@@ -37,7 +37,7 @@ export default function ActionableItemsPage() {
         return b.confidence - a.confidence;
       } else {
         // Priority sorting: high > medium > low
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        const priorityOrder: Record<'high' | 'medium' | 'low', number> = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
       }
     });

@@ -51,10 +51,10 @@ export default function OpportunityAnalysisPage() {
         case 'confidence':
           return b.confidence - a.confidence;
         case 'priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          const priorityOrder: Record<'high' | 'medium' | 'low', number> = { high: 3, medium: 2, low: 1 };
           return priorityOrder[b.priority] - priorityOrder[a.priority];
         case 'effort':
-          const effortOrder = { S: 1, M: 2, L: 3 };
+          const effortOrder: Record<'S' | 'M' | 'L', number> = { S: 1, M: 2, L: 3 };
           return effortOrder[a.effort] - effortOrder[b.effort];
         default:
           return 0;

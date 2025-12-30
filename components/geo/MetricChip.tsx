@@ -102,7 +102,7 @@ export function MetricChip({
             className={cn(
               "inline-flex items-center gap-1 rounded border cursor-help",
               sizeClasses,
-              variantClasses,
+              badgeClasses,
               className
             )}
           >

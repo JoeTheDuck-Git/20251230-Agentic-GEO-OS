@@ -82,8 +82,8 @@ export default function ContentSpecsPage() {
         case 'confidence':
           return b.confidence - a.confidence;
         case 'priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
+          const priorityOrder: Record<'high' | 'medium' | 'low', number> = { high: 3, medium: 2, low: 1 };
+          return priorityOrder[b.priority as 'high' | 'medium' | 'low'] - priorityOrder[a.priority as 'high' | 'medium' | 'low'];
         case 'topic':
           return a.primaryTopic.localeCompare(b.primaryTopic);
         default:
@@ -156,8 +156,8 @@ export default function ContentSpecsPage() {
     markdown += `### Outline\n\n`;
     selectedSpec.outline.forEach(item => {
       markdown += `- ${item.heading}\n`;
-      if (item.bullets) {
-        item.bullets.forEach(bullet => {
+      if ('bullets' in item && item.bullets && Array.isArray(item.bullets)) {
+        item.bullets.forEach((bullet: string) => {
           markdown += `  - ${bullet}\n`;
         });
       }
@@ -420,9 +420,9 @@ export default function ContentSpecsPage() {
                     {selectedSpec.outline.map((item, index) => (
                       <li key={index} className="text-sm text-muted-foreground">
                         <div className="font-medium">{item.heading}</div>
-                        {item.bullets && (
+                        {'bullets' in item && item.bullets && (
                           <ul className="ml-4 mt-1 space-y-0.5">
-                            {item.bullets.map((bullet, bIndex) => (
+                            {item.bullets.map((bullet: string, bIndex: number) => (
                               <li key={bIndex} className="text-xs">• {bullet}</li>
                             ))}
                           </ul>

@@ -52,7 +52,7 @@ export function Sidebar() {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const isActive = pathname === item.href;
-                const isDisabled = item.disabled;
+                const isDisabled = 'disabled' in item && item.disabled;
 
                 if (isDisabled) {
                   return (
