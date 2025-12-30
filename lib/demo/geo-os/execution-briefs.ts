@@ -1,0 +1,148 @@
+export const executionBriefsDemo = {
+  meta: {
+    page: 'execution_briefs',
+    generated_at: '2024-01-15T10:30:00Z',
+    snapshot_id: 'snapshot-2024-01-15-103000',
+    source_agents: ['strategy_agent', 'governance_agent'],
+  },
+  execution_briefs: [
+    {
+      brief_id: 'brief-1',
+      from_item_id: 'item-1',
+      title: 'Cloud Infrastructure Content Expansion',
+      objective: 'Expand content coverage to improve brand visibility in cloud infrastructure topics, addressing content gaps identified in AI-generated answers.',
+      target_audience: 'Technical decision-makers evaluating cloud infrastructure solutions, including DevOps engineers, IT directors, and CTOs seeking comprehensive technical guidance.',
+      pattern_ids: [
+        'pattern_definition',
+        'pattern_recommendation',
+        'pattern_comparison',
+        'pattern_how_to',
+        'pattern_use_case',
+        'pattern_pricing',
+      ],
+      competitive_context: 'TechRival shows significantly higher presence in cloud infrastructure topics. Our brand currently has limited presence in AI-generated answers for these topics. Primary competitors emphasize technical depth and case studies in their content strategy.',
+      coverage_requirements: [
+        'Long-form technical guides covering core concepts',
+        'Case studies demonstrating real-world implementations',
+        'Comparison content highlighting different approaches',
+        'Security-focused content addressing common concerns',
+        'Scalability and performance optimization guidance',
+        'FAQ-style section addressing frequently asked questions',
+      ],
+      tone_guidelines: [
+        'Technical but accessible - avoid excessive jargon',
+        'Authoritative without being prescriptive',
+        'Data-driven with concrete examples',
+        'Balanced perspective acknowledging trade-offs',
+        'Forward-looking, emphasizing innovation',
+      ],
+      constraints: {
+        must_do: [
+          'Include schema markup (Organization, Product)',
+          'Reference authoritative sources and standards',
+          'Address security and compliance considerations',
+          'Provide actionable technical guidance',
+        ],
+        must_not_do: [
+          'Make unsubstantiated performance claims',
+          'Disparage competitor solutions',
+          'Include promotional language or CTAs',
+          'Omit technical depth in favor of brevity',
+        ],
+      },
+      governance: {
+        approved: true,
+        notes: undefined,
+      },
+    },
+    {
+      brief_id: 'brief-2',
+      from_item_id: 'item-2',
+      title: 'Implement llms.txt for AI Discoverability',
+      objective: 'Create llms.txt file to improve AI system discoverability and increase answer inclusion rates by providing machine-readable content taxonomy.',
+      target_audience: 'AI systems and LLMs that crawl and index web content for answer generation, as well as technical teams implementing content discoverability improvements.',
+      pattern_ids: [
+        'pattern_definition',
+        'pattern_how_to',
+        'pattern_checklist',
+      ],
+      competitive_context: 'Industry best practice indicates notable improvement in AI answer inclusion rates with llms.txt implementation. Most competitors have not yet implemented this standard, presenting an opportunity for early adoption.',
+      coverage_requirements: [
+        'List key content pages by topic relevance',
+        'Include topic taxonomy and content categories',
+        'Reference sitemap and key content locations',
+        'Provide content structure metadata',
+      ],
+      tone_guidelines: [
+        'Machine-readable and structured',
+        'Clear and unambiguous',
+        'Comprehensive but concise',
+      ],
+      constraints: {
+        must_do: [
+          'Follow llms.txt specification standards',
+          'Include accurate content references',
+          'Update when content structure changes',
+          'Maintain accessibility and readability',
+        ],
+        must_not_do: [
+          'Include dynamic or time-sensitive URLs',
+          'Reference private or restricted content',
+          'Include promotional or marketing language',
+          'Exceed recommended file size limits',
+        ],
+      },
+      governance: {
+        approved: true,
+        notes: undefined,
+      },
+    },
+    {
+      brief_id: 'brief-3',
+      from_item_id: 'item-3',
+      title: 'Improve Sentiment in AI Automation Discussions',
+      objective: 'Address negative sentiment concerns in AI Automation topics by creating content that acknowledges automation challenges while positioning solutions constructively.',
+      target_audience: 'Professionals concerned about AI automation impact, including HR leaders, workforce planners, and business executives evaluating automation strategies.',
+      pattern_ids: [
+        'pattern_pros_cons',
+        'pattern_trust',
+        'pattern_use_case',
+        'pattern_how_to',
+        'pattern_checklist',
+      ],
+      competitive_context: 'Negative sentiment levels are above industry average. Competitor InnovateCo maintains lower negative sentiment through proactive content addressing concerns and workforce transition guidance.',
+      coverage_requirements: [
+        'Content acknowledging automation concerns',
+        'Case studies showing positive outcomes',
+        'Guidance on workforce transition',
+        'Ethical considerations in automation',
+        'Balanced perspective on risks and benefits',
+      ],
+      tone_guidelines: [
+        'Empathetic to workforce concerns',
+        'Constructive and solution-oriented',
+        'Transparent about challenges',
+        'Forward-looking and optimistic',
+        'Respectful of different perspectives',
+      ],
+      constraints: {
+        must_do: [
+          'Acknowledge legitimate concerns',
+          'Provide balanced perspective',
+          'Reference credible research and data',
+          'Emphasize human-AI collaboration',
+        ],
+        must_not_do: [
+          'Dismiss or minimize concerns',
+          'Make promises about job security',
+          'Use fear-based messaging',
+          'Ignore ethical considerations',
+        ],
+      },
+      governance: {
+        approved: false,
+        notes: 'Requires careful messaging to avoid amplifying concerns. Review with governance team before execution. Content must be reviewed by legal and HR teams.',
+      },
+    },
+  ],
+};

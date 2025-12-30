@@ -1,0 +1,126 @@
+export const actionableItemsDemo = {
+  meta: {
+    page: 'actionable_items',
+    generated_at: '2024-01-15T10:30:00Z',
+    snapshot_id: 'snapshot-2024-01-15-103000',
+    source_agents: ['strategy_agent', 'reasoning_agent', 'governance_agent'],
+  },
+  items: [
+    {
+      id: 'item-1',
+      title: 'Expand Cloud Infrastructure Content',
+      description: 'Your brand has low visibility (25% reach) for cloud infrastructure questions. Create comprehensive guides to improve presence and increase AI answer inclusion rates across key topics.',
+      focus_area: 'Content Coverage',
+      confidence: 0.85,
+      source_agent: 'Strategy',
+      priority: 'high' as const,
+      risk_level: 'low' as const,
+      evidence: [
+        'Visibility reach is 25% for Cloud Infrastructure topics',
+        'Competitor TechRival has 68% reach in same topics',
+        'Top 10 questions show content gaps in technical depth',
+        'AI answer inclusion rate is below market average',
+      ],
+      rationale: {
+        summary: 'Cloud Infrastructure represents 30% of tracked questions but only 15% of brand mentions. Expanding content coverage with comprehensive guides and technical case studies will improve visibility reach from 25% to an estimated 60% within 30 days.',
+        source_agent: 'Reasoning',
+      },
+      governance: {
+        status: 'approved' as const,
+      },
+    },
+    {
+      id: 'item-2',
+      title: 'Implement llms.txt for AI Discoverability',
+      description: 'Add llms.txt file to improve AI discoverability and answer inclusion rate. This structural improvement helps AI systems understand your content taxonomy and key pages.',
+      focus_area: 'Structural Improvement',
+      confidence: 0.78,
+      source_agent: 'Strategy',
+      priority: 'medium' as const,
+      risk_level: 'low' as const,
+      evidence: [
+        'Current AI answer inclusion rate is 45%',
+        'Industry best practice shows 20% improvement with llms.txt',
+        'Content structure is not machine-readable',
+        'Topic taxonomy exists but not exposed to AI systems',
+      ],
+      rationale: {
+        summary: 'llms.txt provides a machine-readable index of key content pages and topic taxonomy. This structural signal helps AI systems discover and reference your content more accurately, improving answer inclusion rates by an estimated 20%.',
+        source_agent: 'Reasoning',
+      },
+      governance: {
+        status: 'approved' as const,
+      },
+    },
+    {
+      id: 'item-3',
+      title: 'Improve Sentiment in AI Automation Discussions',
+      description: 'Negative sentiment (15%) in AI Automation topics is higher than industry average (8%). Address common concerns and improve brand positioning in AI-generated answers.',
+      focus_area: 'Sentiment Improvement',
+      confidence: 0.72,
+      source_agent: 'Strategy',
+      priority: 'high' as const,
+      risk_level: 'medium' as const,
+      evidence: [
+        'Negative sentiment is 15% vs 8% industry average',
+        'Top negative mentions focus on automation concerns',
+        'Competitor InnovateCo has 5% negative sentiment',
+        'Sentiment trend shows slight decline over 30 days',
+      ],
+      rationale: {
+        summary: 'Negative sentiment in AI Automation topics is nearly double the industry average. Common concerns focus on job displacement and automation risks. Addressing these concerns through content and positioning can reduce negative sentiment to industry average levels.',
+        source_agent: 'Reasoning',
+      },
+      governance: {
+        status: 'warning' as const,
+        notes: 'Requires careful messaging to avoid amplifying concerns. Review with governance team before execution.',
+      },
+    },
+    {
+      id: 'item-4',
+      title: 'Add Schema Markup for Product Pages',
+      description: 'Implement Organization and Product schema markup on key service pages to improve structured data signals for AI systems.',
+      focus_area: 'Authority Signal',
+      confidence: 0.68,
+      source_agent: 'Strategy',
+      priority: 'medium' as const,
+      risk_level: 'low' as const,
+      evidence: [
+        'Only 20% of product pages have schema markup',
+        'Competitors average 60% schema coverage',
+        'Structured data improves AI answer accuracy',
+        'Product pages show lower visibility than expected',
+      ],
+      rationale: {
+        summary: 'Schema markup provides structured signals that help AI systems understand product attributes and relationships. Current coverage is below industry standards, limiting AI answer accuracy and brand mention quality.',
+        source_agent: 'Reasoning',
+      },
+      governance: {
+        status: 'approved' as const,
+      },
+    },
+    {
+      id: 'item-5',
+      title: 'Expand Data Security Topic Coverage',
+      description: 'Data Security topics show strong potential but limited content depth. Expand coverage to capture growing question volume in this area.',
+      focus_area: 'Topic Expansion',
+      confidence: 0.65,
+      source_agent: 'Strategy',
+      priority: 'low' as const,
+      risk_level: 'low' as const,
+      evidence: [
+        'Question volume increased 40% in past 60 days',
+        'Current content depth is shallow (avg 800 words)',
+        'Competitors have 3x more content in this area',
+        'Topic shows high search intent but low brand visibility',
+      ],
+      rationale: {
+        summary: 'Data Security topic shows strong growth in question volume but brand has limited content depth. Expanding coverage now positions brand to capture growing interest before market saturation.',
+        source_agent: 'Reasoning',
+      },
+      governance: {
+        status: 'approved' as const,
+      },
+    },
+  ],
+};
