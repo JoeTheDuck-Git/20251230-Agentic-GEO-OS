@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { contentPlanningDemo } from '@/lib/demo/geo-os/content-planning';
 import { PatternChips } from '@/components/geo/PatternChips';
 
-export default function ContentPlanningPage() {
+function ContentPlanningContent() {
   const data = contentPlanningDemo;
   const searchParams = useSearchParams();
   const briefId = searchParams.get('brief');
@@ -230,5 +230,23 @@ export default function ContentPlanningPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ContentPlanningLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ContentPlanningPage() {
+  return (
+    <Suspense fallback={<ContentPlanningLoading />}>
+      <ContentPlanningContent />
+    </Suspense>
   );
 }

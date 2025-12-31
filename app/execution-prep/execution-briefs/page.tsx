@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { executionBriefsDemo } from '@/lib/demo/geo-os/execution-briefs';
 import { contentSpecsDemo } from '@/lib/demo/geo-os/content-specs';
 import { PatternChips } from '@/components/geo/PatternChips';
 
-export default function ExecutionBriefsPage() {
+function ExecutionBriefsContent() {
   const data = executionBriefsDemo;
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -338,5 +338,23 @@ export default function ExecutionBriefsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ExecutionBriefsLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ExecutionBriefsPage() {
+  return (
+    <Suspense fallback={<ExecutionBriefsLoading />}>
+      <ExecutionBriefsContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { contentSpecsDemo } from '@/lib/demo/geo-os/content-specs';
@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export default function ContentSpecsPage() {
+function ContentSpecsContent() {
   const data = contentSpecsDemo;
   const searchParams = useSearchParams();
   const specId = searchParams.get('spec');
