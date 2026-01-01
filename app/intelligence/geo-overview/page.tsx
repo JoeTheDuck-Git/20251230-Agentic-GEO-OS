@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { geoOverviewDemo } from '@/lib/demo/geo-os/geo-overview';
 import {
   Tooltip,
@@ -29,7 +29,7 @@ import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
 import { useSearchParams } from 'next/navigation';
 import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
-export default function GeoOverviewPage() {
+function GeoOverviewContent() {
   const data = geoOverviewDemo;
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
@@ -569,5 +569,23 @@ export default function GeoOverviewPage() {
       </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function GeoOverviewLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function GeoOverviewPage() {
+  return (
+    <Suspense fallback={<GeoOverviewLoading />}>
+      <GeoOverviewContent />
+    </Suspense>
   );
 }

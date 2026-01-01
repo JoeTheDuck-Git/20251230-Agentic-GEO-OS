@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { measurementDemo, ContentAsset } from '@/lib/demo/geo/measurement.demo';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
@@ -17,7 +17,7 @@ import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
 import { FileXIcon } from '@/components/geo/states/GeoEmptyState';
 import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
-export default function ContentPerformancePage() {
+function ContentPerformanceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -300,5 +300,23 @@ export default function ContentPerformancePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function ContentPerformanceLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ContentPerformancePage() {
+  return (
+    <Suspense fallback={<ContentPerformanceLoading />}>
+      <ContentPerformanceContent />
+    </Suspense>
   );
 }

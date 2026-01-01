@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { alertsDemo, Alert, AlertSeverity, AlertType } from '@/lib/demo/geo/alerts.demo';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
 import { CiteShareDelta } from '@/components/geo/CiteShareDelta';
@@ -19,7 +19,7 @@ import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 type SortOption = 'newest' | 'severity';
 
-export default function AlertsPage() {
+function AlertsContent() {
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
   const freshnessMeta = getAlertsMeta(geoQueryState);
@@ -310,6 +310,24 @@ export default function AlertsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AlertsLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AlertsPage() {
+  return (
+    <Suspense fallback={<AlertsLoading />}>
+      <AlertsContent />
+    </Suspense>
   );
 }
 

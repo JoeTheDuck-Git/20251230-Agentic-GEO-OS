@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { sourcesDemo, SourceDomainRow, SourceDomainDetail, BrandKey, SourceBrandDataset } from '@/lib/demo/geo-os/sources.demo';
 import Link from 'next/link';
 import { SourceCategoryChips } from '@/components/geo/SourceCategoryChips';
@@ -32,7 +32,7 @@ type OverlapDomain = {
   categories: string[];
 };
 
-export default function SourcesPage() {
+function SourcesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -643,5 +643,23 @@ export default function SourcesPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function SourcesLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function SourcesPage() {
+  return (
+    <Suspense fallback={<SourcesLoading />}>
+      <SourcesContent />
+    </Suspense>
   );
 }

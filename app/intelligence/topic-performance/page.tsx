@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { topicPerformanceDemo } from '@/lib/demo/geo-os/topic-performance';
 import { PatternChips } from '@/components/geo/PatternChips';
 import { DriverChip } from '@/components/geo/DriverChip';
@@ -22,7 +22,7 @@ import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 type SortOption = 'visibility_desc' | 'reach_desc' | 'position_asc' | 'name_asc';
 
-export default function TopicPerformancePage() {
+function TopicPerformanceContent() {
   const data = topicPerformanceDemo;
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
@@ -359,5 +359,23 @@ export default function TopicPerformancePage() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function TopicPerformanceLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function TopicPerformancePage() {
+  return (
+    <Suspense fallback={<TopicPerformanceLoading />}>
+      <TopicPerformanceContent />
+    </Suspense>
   );
 }

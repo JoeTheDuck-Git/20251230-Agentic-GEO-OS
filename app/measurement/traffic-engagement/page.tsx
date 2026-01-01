@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { measurementDemo } from '@/lib/demo/geo/measurement.demo';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
@@ -15,7 +15,7 @@ import { GeoEmptyState } from '@/components/geo/states/GeoEmptyState';
 import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
 import { FileXIcon } from '@/components/geo/states/GeoEmptyState';
 
-export default function TrafficEngagementPage() {
+function TrafficEngagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -240,5 +240,23 @@ export default function TrafficEngagementPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function TrafficEngagementLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function TrafficEngagementPage() {
+  return (
+    <Suspense fallback={<TrafficEngagementLoading />}>
+      <TrafficEngagementContent />
+    </Suspense>
   );
 }

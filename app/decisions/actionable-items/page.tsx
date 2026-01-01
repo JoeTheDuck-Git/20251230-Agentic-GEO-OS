@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { actionableItemsDemo } from '@/lib/demo/geo-os/actionable-items';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
@@ -17,7 +17,7 @@ type FocusArea = 'all' | 'Content Coverage' | 'Structural Improvement' | 'Sentim
 type RiskLevel = 'all' | 'low' | 'medium' | 'high';
 type SortBy = 'confidence' | 'priority';
 
-export default function ActionableItemsPage() {
+function ActionableItemsContent() {
   const data = actionableItemsDemo;
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
@@ -342,5 +342,23 @@ export default function ActionableItemsPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function ActionableItemsLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ActionableItemsPage() {
+  return (
+    <Suspense fallback={<ActionableItemsLoading />}>
+      <ActionableItemsContent />
+    </Suspense>
   );
 }

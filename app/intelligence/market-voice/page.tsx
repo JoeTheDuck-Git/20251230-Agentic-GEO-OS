@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { marketVoiceNarrativesDemo } from '@/lib/demo/geo/market-voice-narratives.demo';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
@@ -20,7 +20,7 @@ import { useSearchParams } from 'next/navigation';
 
 type TabType = 'credited' | 'descriptors' | 'claims';
 
-export default function MarketVoicePage() {
+function MarketVoiceContent() {
   const data = marketVoiceNarrativesDemo;
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
@@ -417,5 +417,23 @@ export default function MarketVoicePage() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function MarketVoiceLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function MarketVoicePage() {
+  return (
+    <Suspense fallback={<MarketVoiceLoading />}>
+      <MarketVoiceContent />
+    </Suspense>
   );
 }

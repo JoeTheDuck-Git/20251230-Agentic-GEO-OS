@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { opportunityAnalysisDemo, Opportunity } from '@/lib/demo/geo-os/opportunity-analysis';
 import {
@@ -24,7 +24,7 @@ import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
 import { AlertCircleIcon } from '@/components/geo/icons/GeoIcons';
 import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
-export default function OpportunityAnalysisPage() {
+function OpportunityAnalysisContent() {
   const data = opportunityAnalysisDemo;
   const searchParams = useSearchParams();
   const geoQueryState = parseGeoQuery(searchParams);
@@ -543,5 +543,23 @@ export default function OpportunityAnalysisPage() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function OpportunityAnalysisLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function OpportunityAnalysisPage() {
+  return (
+    <Suspense fallback={<OpportunityAnalysisLoading />}>
+      <OpportunityAnalysisContent />
+    </Suspense>
   );
 }
