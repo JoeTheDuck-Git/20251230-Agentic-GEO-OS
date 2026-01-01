@@ -3,6 +3,15 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { actionableItemsDemo } from '@/lib/demo/geo-os/actionable-items';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { GeoLink } from '@/components/geo/GeoLink';
+import { GeoJourneyHint } from '@/components/geo/GeoJourneyHint';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getActionableItemsMeta } from '@/lib/geo/meta/geoMeta';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { useSearchParams } from 'next/navigation';
+import { GeoEmptyState, FileXIcon } from '@/components/geo/states/GeoEmptyState';
+import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
 
 type FocusArea = 'all' | 'Content Coverage' | 'Structural Improvement' | 'Sentiment Improvement' | 'Authority Signal' | 'Topic Expansion';
 type RiskLevel = 'all' | 'low' | 'medium' | 'high';
@@ -10,6 +19,9 @@ type SortBy = 'confidence' | 'priority';
 
 export default function ActionableItemsPage() {
   const data = actionableItemsDemo;
+  const searchParams = useSearchParams();
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getActionableItemsMeta(geoQueryState);
   const [focusAreaFilter, setFocusAreaFilter] = useState<FocusArea>('all');
   const [riskFilter, setRiskFilter] = useState<RiskLevel>('all');
   const [sortBy, setSortBy] = useState<SortBy>('confidence');
@@ -99,7 +111,15 @@ export default function ActionableItemsPage() {
         <p className="text-muted-foreground mt-2">
           Decision prompts derived from GEO signals. Review-only — no execution.
         </p>
+        <div className="mt-2">
+          <GeoJourneyHint />
+        </div>
       </div>
+
+      <GeoGlobalFilters />
+
+      {/* Data Freshness */}
+      <GeoDataFreshness {...freshnessMeta} />
 
       {/* B) Summary strip */}
       <div className="rounded-lg border bg-card p-4">
@@ -159,8 +179,19 @@ export default function ActionableItemsPage() {
       </div>
 
       {/* D) Items list as Cards */}
-      <div className="space-y-4">
-        {filteredAndSortedItems.map((item) => {
+      {filteredAndSortedItems.length === 0 ? (
+        <GeoEmptyState
+          title={EMPTY_STATE_COPY.NO_ACTIONABLE_ITEMS.TITLE}
+          description={EMPTY_STATE_COPY.NO_ACTIONABLE_ITEMS.DESC}
+          icon={<FileXIcon className="h-12 w-12 text-muted-foreground" />}
+          actions={[
+            { label: 'Open Opportunity Analysis', href: '/decisions/opportunity-analysis', variant: 'default' },
+            { label: 'View Topic Performance', href: '/intelligence/topic-performance', variant: 'outline' },
+          ]}
+        />
+      ) : (
+        <div className="space-y-4">
+          {filteredAndSortedItems.map((item) => {
           const isGovernanceExpanded = expandedItems.has(`${item.id}-governance`);
           
           return (
@@ -291,17 +322,18 @@ export default function ActionableItemsPage() {
                   />
                   <span className="text-sm text-muted-foreground">Acknowledge</span>
                 </label>
-                <Link
+                <GeoLink
                   href={`/execution-prep/execution-briefs?from=${item.id}`}
                   className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                 >
                   View Execution Brief →
-                </Link>
+                </GeoLink>
               </div>
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* F) Footer boundary */}
       <div className="rounded-lg border bg-muted/50 p-4">

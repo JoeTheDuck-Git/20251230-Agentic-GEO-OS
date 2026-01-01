@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { contentPlanningDemo } from '@/lib/demo/geo-os/content-planning';
 import { PatternChips } from '@/components/geo/PatternChips';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
 
 function ContentPlanningContent() {
   const data = contentPlanningDemo;
@@ -64,6 +65,8 @@ function ContentPlanningContent() {
           Planning guidance derived from execution briefs. Context-only — no scheduling or task assignment.
         </p>
       </div>
+
+      <GeoGlobalFilters />
 
       {/* Not found notice */}
       {showNotFoundNotice && (

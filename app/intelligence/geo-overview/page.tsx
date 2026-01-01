@@ -15,9 +15,25 @@ import { LowSampleBadge } from '@/components/ui/low-sample-badge';
 import { MetricChip } from '@/components/geo/MetricChip';
 import { getMetricDefinition, formatMetricValue } from '@/lib/geo/metrics/metricRegistry';
 import Link from 'next/link';
+import { sourcesDemo } from '@/lib/demo/geo-os/sources.demo';
+import { SourceCategoryChips } from '@/components/geo/SourceCategoryChips';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { MetricMethodologyDrawer } from '@/components/geo/MetricMethodologyDrawer';
+import { ConfidenceStrip } from '@/components/geo/ConfidenceStrip';
+import { alertsDemo } from '@/lib/demo/geo/alerts.demo';
+import { GeoLink } from '@/components/geo/GeoLink';
+import { GeoJourneyHint } from '@/components/geo/GeoJourneyHint';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getIntelligenceMeta } from '@/lib/geo/meta/geoMeta';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { useSearchParams } from 'next/navigation';
+import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 export default function GeoOverviewPage() {
   const data = geoOverviewDemo;
+  const searchParams = useSearchParams();
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getIntelligenceMeta(geoQueryState);
   const [isWhyChangedOpen, setIsWhyChangedOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'brand' | 'score'>('score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -48,20 +64,34 @@ export default function GeoOverviewPage() {
       <div className="container mx-auto p-6 space-y-6">
       {/* A) Page Header */}
       <div>
-        <h1 className="text-3xl font-bold">GEO Overview</h1>
-        <p className="text-muted-foreground mt-2">
-          High-level GEO performance metrics and competitive positioning
-        </p>
-        {/* Compact metadata row */}
-        <div className="mt-3 text-xs text-muted-foreground">
-          Questions: {data.metadata.questions_count} · Topics: {data.metadata.topics_count} · Brands: {data.metadata.brands_count} · Last updated: {new Date(data.metadata.last_updated).toLocaleDateString()}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold">GEO Overview</h1>
+            <p className="text-muted-foreground mt-2">
+              High-level GEO performance metrics and competitive positioning
+            </p>
+            {/* Compact metadata row */}
+            <div className="mt-3 text-xs text-muted-foreground">
+              Questions: {data.metadata.questions_count} · Topics: {data.metadata.topics_count} · Brands: {data.metadata.brands_count} · Last updated: {new Date(data.metadata.last_updated).toLocaleDateString()}
+            </div>
+            <div className="mt-2">
+              <GeoJourneyHint />
+            </div>
+          </div>
+          <GeoPageActions
+            exportContext={{
+              title: 'GEO Overview',
+              description: 'Export includes KPIs, competitive positioning, and top sources.',
+            }}
+          />
         </div>
       </div>
 
-      {/* Page-level source note */}
-      <div className="text-xs text-muted-foreground">
-        All signals from Intelligence Agent (read-only)
-      </div>
+      {/* Global Filters */}
+      <GeoGlobalFilters />
+
+      {/* Data Freshness */}
+      <GeoDataFreshness {...freshnessMeta} />
 
       {/* B) KPI Row with 4 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -83,6 +113,7 @@ export default function GeoOverviewPage() {
                 <p>{getMetricDefinition("geoScore").tooltip.body}</p>
               </TooltipContent>
             </Tooltip>
+            <MetricMethodologyDrawer metricId="geoScore" />
           </div>
           <div className="text-4xl font-bold">
             <AnimatedNumber value={data.geo_score.value} format="percent" />
@@ -92,6 +123,14 @@ export default function GeoOverviewPage() {
               type="geoScore"
               current={72}
               previous={68}
+            />
+          </div>
+          <div className="mt-3">
+            <ConfidenceStrip
+              answerUnits={data.metadata.questions_count}
+              questions={data.metadata.questions_count}
+              models={1}
+              lastRunLabel={new Date(data.metadata.last_updated).toLocaleDateString()}
             />
           </div>
         </div>
@@ -114,6 +153,7 @@ export default function GeoOverviewPage() {
                 <p>{getMetricDefinition("reach").tooltip.body}</p>
               </TooltipContent>
             </Tooltip>
+            <MetricMethodologyDrawer metricId="reach" />
           </div>
           <div className="text-4xl font-bold flex items-center gap-2">
             <AnimatedNumber 
@@ -132,6 +172,16 @@ export default function GeoOverviewPage() {
               type="reach"
               current={65}
               previous={61}
+            />
+          </div>
+          <div className="mt-3">
+            <ConfidenceStrip
+              answerUnits={data.visibility.totalAnswerUnits || data.metadata.questions_count}
+              questions={data.metadata.questions_count}
+              models={1}
+              lastRunLabel={new Date(data.metadata.last_updated).toLocaleDateString()}
+              lowSample={data.visibility.totalAnswerUnits !== undefined && data.visibility.totalAnswerUnits < 30}
+              metricId="reach"
             />
           </div>
         </div>
@@ -154,6 +204,7 @@ export default function GeoOverviewPage() {
                 <p>{getMetricDefinition("avgPosition").tooltip.body}</p>
               </TooltipContent>
             </Tooltip>
+            <MetricMethodologyDrawer metricId="avgPosition" />
           </div>
           <div className="text-4xl font-bold">
             <AnimatedNumber 
@@ -167,6 +218,14 @@ export default function GeoOverviewPage() {
               type="avgPosition"
               current={2.3}
               previous={2.7}
+            />
+          </div>
+          <div className="mt-3">
+            <ConfidenceStrip
+              answerUnits={data.visibility.totalAnswerUnits || data.metadata.questions_count}
+              questions={data.metadata.questions_count}
+              models={1}
+              lastRunLabel={new Date(data.metadata.last_updated).toLocaleDateString()}
             />
           </div>
         </div>
@@ -195,6 +254,7 @@ export default function GeoOverviewPage() {
                 </div>
               </TooltipContent>
             </Tooltip>
+            <MetricMethodologyDrawer metricId="sentiment" />
           </div>
           {/* Show sentiment score if available */}
           {data.sentiment.sentimentScorePct !== undefined && (
@@ -244,6 +304,45 @@ export default function GeoOverviewPage() {
           <div className="mt-3 text-xs text-muted-foreground">
             Predominantly positive sentiment with minimal negative mentions.
           </div>
+          <div className="mt-3">
+            <ConfidenceStrip
+              answerUnits={data.sentiment.sentimentMentionsSampleSize || data.metadata.questions_count}
+              questions={data.metadata.questions_count}
+              models={1}
+              lastRunLabel={new Date(data.metadata.last_updated).toLocaleDateString()}
+              lowSample={data.sentiment.sentimentMentionsSampleSize !== undefined && data.sentiment.sentimentMentionsSampleSize < 30}
+              metricId="sentiment"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Active Alerts */}
+      <div className="rounded-lg border bg-card p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Active Alerts</h3>
+          </div>
+          <GeoLink
+            href="/intelligence/alerts"
+            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            View alerts →
+          </GeoLink>
+        </div>
+        <div className="space-y-2">
+          {alertsDemo
+            .filter((a) => a.severity === 'High' || a.severity === 'Medium')
+            .slice(0, 3)
+            .map((alert) => (
+              <div key={alert.id} className="text-sm">
+                <span className="font-medium">{alert.title}</span>
+                <span className="text-muted-foreground ml-2">• {alert.severity}</span>
+              </div>
+            ))}
+        </div>
+        <div className="text-xs text-muted-foreground mt-3">
+          {alertsDemo.length} total alerts
         </div>
       </div>
 
@@ -286,6 +385,45 @@ export default function GeoOverviewPage() {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Top Cited Sources */}
+      <div className="rounded-lg border bg-card p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Top Cited Sources</h3>
+          </div>
+          <GeoLink
+            href="/intelligence/sources"
+            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            View all sources →
+          </GeoLink>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {sourcesDemo.brands.acme.domains
+            .sort((a, b) => b.citeSharePct - a.citeSharePct)
+            .slice(0, 5)
+            .map((source) => (
+              <div key={source.domain} className="flex items-center gap-1.5">
+                <span className="text-xs px-2 py-1 rounded border bg-muted/50 text-muted-foreground">
+                  {source.domain}
+                </span>
+                <SourceCategoryChips categories={source.categories} max={1} size="sm" />
+              </div>
+            ))}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {sourcesDemo.brands.acme.domains.length} domains • Snapshot: {sourcesDemo.snapshotLabel}
+        </div>
+        <div className="text-xs text-muted-foreground mt-2">
+          <GeoLink
+            href="/intelligence/sources?mode=gaps&compareTo=techrival"
+            className="text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Competitor gaps detected →
+          </GeoLink>
         </div>
       </div>
 

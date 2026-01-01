@@ -1,373 +1,420 @@
 'use client';
 
-import { marketVoiceDemo } from '@/lib/demo/geo-os/market-voice';
+import { useState } from 'react';
+import Link from 'next/link';
+import { marketVoiceNarrativesDemo } from '@/lib/demo/geo/market-voice-narratives.demo';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { PatternChips } from '@/components/geo/PatternChips';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { GeoLink } from '@/components/geo/GeoLink';
+import { GeoJourneyHint } from '@/components/geo/GeoJourneyHint';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getMarketVoiceMeta } from '@/lib/geo/meta/geoMeta';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { useSearchParams } from 'next/navigation';
+
+type TabType = 'credited' | 'descriptors' | 'claims';
 
 export default function MarketVoicePage() {
-  const data = marketVoiceDemo;
+  const data = marketVoiceNarrativesDemo;
+  const searchParams = useSearchParams();
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getMarketVoiceMeta(geoQueryState);
+  const [selectedTab, setSelectedTab] = useState<TabType>('credited');
+  const [selectedCompetitor, setSelectedCompetitor] = useState<string>('TechRival');
+  const [expandedClaims, setExpandedClaims] = useState<Set<string>>(new Set());
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-US').format(num);
+  const toggleClaim = (claimId: string) => {
+    const newExpanded = new Set(expandedClaims);
+    if (newExpanded.has(claimId)) {
+      newExpanded.delete(claimId);
+    } else {
+      newExpanded.add(claimId);
+    }
+    setExpandedClaims(newExpanded);
   };
 
-  const formatPercentage = (num: number) => {
-    return `${(num * 100).toFixed(1)}%`;
-  };
-
-  const getSentimentColor = (sentiment: string) => {
-    switch (sentiment.toLowerCase()) {
-      case 'positive':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'negative':
-        return 'bg-red-100 text-red-800 border-red-200';
+  const getStanceBadgeClass = (stance: string) => {
+    switch (stance) {
+      case 'supporting':
+        return 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400';
+      case 'challenging':
+        return 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400';
+      case 'mixed':
+        return 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'border-gray-200 bg-gray-50 text-gray-700';
     }
   };
 
-  const getRiskColor = (risk: string) => {
-    switch (risk.toLowerCase()) {
-      case 'high':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-green-100 text-green-800 border-green-200';
-    }
+  // Calculate summary metrics
+  const topCreditedCount = data.creditedFor.length;
+  const descriptorPolarityGap = {
+    acme: {
+      positive: data.descriptors.acme.positive.length,
+      negative: data.descriptors.acme.negative.length,
+    },
+    rival: {
+      positive: data.descriptors.rival.positive.length,
+      negative: data.descriptors.rival.negative.length,
+    },
   };
-
-  const getTrendIcon = (trend: string) => {
-    switch (trend.toLowerCase()) {
-      case 'up':
-        return '↑';
-      case 'down':
-        return '↓';
-      default:
-        return '→';
-    }
-  };
-
-  const getTrendTooltip = (trend: string): string => {
-    switch (trend.toLowerCase()) {
-      case 'up':
-        return 'Up vs previous period.';
-      case 'down':
-        return 'Down vs previous period.';
-      default:
-        return 'No significant change vs previous period.';
-    }
-  };
+  const claimsCount = data.claims.length;
 
   return (
     <TooltipProvider>
       <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Market Voice</h1>
-        <p className="text-muted-foreground mt-2">
-          External market signals (forums, social, Q&A). Read-only. Not included in GEO scoring.
-        </p>
-      </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Market Voice</h1>
+          <p className="text-muted-foreground mt-2">
+            Narrative mining: what competitors are credited for, language differences, and circulating claims. Read-only.
+          </p>
+          <div className="mt-3 flex items-center gap-4">
+            <div className="text-xs text-muted-foreground">
+              Brand: {data.meta.brand} • Competitor: {data.meta.competitor} • {data.meta.range} • Snapshot: {data.meta.snapshot}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground">Compare to:</label>
+              <select
+                value={selectedCompetitor}
+                onChange={(e) => setSelectedCompetitor(e.target.value)}
+                className="px-2 py-1 text-xs border rounded-md bg-background"
+              >
+                <option value="TechRival">TechRival</option>
+                <option value="SecureNet">SecureNet</option>
+                <option value="CloudTech">CloudTech</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-2">
+            <GeoJourneyHint />
+          </div>
+        </div>
 
-      {/* Callout note */}
-      <div className="rounded-lg border bg-muted/50 p-4">
-        <p className="text-sm text-muted-foreground mb-2">
-          <strong>Measurement isolation:</strong> Market Voice is analyzed separately from GEO Score to preserve measurement isolation.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Use it to understand narratives, objections, and recurring questions.
-        </p>
-      </div>
+        <GeoGlobalFilters />
 
-      {/* KPI Row (4 cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-lg border bg-card p-6">
-          <div className="text-sm font-medium text-muted-foreground mb-2">Mentions (30d)</div>
-          <div className="text-3xl font-bold">{formatNumber(data.kpis.mentions_30d)}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="text-sm font-medium text-muted-foreground">Share of Voice</div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-label="Share of Voice information"
-                >
-                  <span className="text-xs leading-none">ⓘ</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p>Share of total tracked mentions attributed to your brand within the selected time range and sources.</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="text-3xl font-bold">{formatPercentage(data.kpis.share_of_voice)}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="text-sm font-medium text-muted-foreground">Market Sentiment</div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-label="Market Sentiment information"
-                >
-                  <span className="text-xs leading-none">ⓘ</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p>Sentiment of market discussions (forums/social/Q&A). Separate from GEO sentiment in AI answers.</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="space-y-2 mt-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-green-700">Positive</span>
-              <span className="font-medium">{formatPercentage(data.kpis.market_sentiment.positive)}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-green-600 h-2 rounded-full"
-                style={{ width: `${data.kpis.market_sentiment.positive * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-600">Neutral</span>
-              <span className="font-medium">{formatPercentage(data.kpis.market_sentiment.neutral)}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-gray-400 h-2 rounded-full"
-                style={{ width: `${data.kpis.market_sentiment.neutral * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-red-700">Negative</span>
-              <span className="font-medium">{formatPercentage(data.kpis.market_sentiment.negative)}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-red-600 h-2 rounded-full"
-                style={{ width: `${data.kpis.market_sentiment.negative * 100}%` }}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="text-sm font-medium text-muted-foreground">Momentum</div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-label="Momentum information"
-                >
-                  <span className="text-xs leading-none">ⓘ</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p>Change in mentions vs the previous equivalent period (e.g., last 30 days vs prior 30 days).</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="text-3xl font-bold text-green-600">
-            {data.kpis.momentum > 0 ? '+' : ''}{formatPercentage(data.kpis.momentum)}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">vs previous period</div>
-        </div>
-      </div>
+        {/* Data Freshness */}
+        <GeoDataFreshness {...freshnessMeta} />
 
-      {/* Insights Grid (2 columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top Narratives */}
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">Top Narratives</h3>
-          <div className="space-y-3">
-            {data.top_narratives.map((narrative, i) => (
-              <div key={i} className="p-3 border rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm mb-1">{narrative.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatPercentage(narrative.share)} of mentions
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-lg border bg-card p-4">
+            <div className="text-sm font-medium text-muted-foreground mb-1">Top Credited Themes</div>
+            <div className="text-2xl font-bold">{topCreditedCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">Competitor themes tracked</div>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <div className="text-sm font-medium text-muted-foreground mb-1">Descriptor Polarity Gap</div>
+            <div className="text-2xl font-bold">
+              {descriptorPolarityGap.acme.positive - descriptorPolarityGap.rival.positive > 0 ? '+' : ''}
+              {descriptorPolarityGap.acme.positive - descriptorPolarityGap.rival.positive}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Acme: {descriptorPolarityGap.acme.positive} pos / {descriptorPolarityGap.acme.negative} neg • 
+              Rival: {descriptorPolarityGap.rival.positive} pos / {descriptorPolarityGap.rival.negative} neg
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <div className="text-sm font-medium text-muted-foreground mb-1">Claims Tracked</div>
+            <div className="text-2xl font-bold">{claimsCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">Supporting, challenging, mixed</div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedTab('credited')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                selectedTab === 'credited'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Credited For
+            </button>
+            <button
+              onClick={() => setSelectedTab('descriptors')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                selectedTab === 'descriptors'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Descriptors
+            </button>
+            <button
+              onClick={() => setSelectedTab('claims')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                selectedTab === 'claims'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Claims & Counterclaims
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {selectedTab === 'credited' && (
+          <div className="rounded-lg border bg-card">
+            <div className="p-4 border-b bg-muted/50">
+              <h3 className="text-lg font-semibold">Competitors Credited For</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Themes where competitors are frequently mentioned or credited in AI answers.
+              </p>
+            </div>
+            <div className="divide-y">
+              {data.creditedFor.map((item, index) => (
+                <div key={index} className="p-4 hover:bg-muted/30">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">{item.competitor}</span>
+                        <span className="text-sm text-muted-foreground">credited for</span>
+                        <span className="font-semibold">{item.theme}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Support: {item.support.sharePct}% of relevant answers
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">Top domains:</span>
+                        {item.support.topDomains.map((domain, idx) => (
+                          <GeoLink
+                            key={idx}
+                            href={`/intelligence/sources?domain=${encodeURIComponent(domain)}`}
+                            className="text-xs px-2 py-0.5 rounded border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            {domain}
+                          </GeoLink>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">Topics:</span>
+                        {item.support.topTopics.map((topic, idx) => (
+                          <GeoLink
+                            key={idx}
+                            href={`/intelligence/topic-performance?topic=${encodeURIComponent(topic)}`}
+                            className="text-xs px-2 py-0.5 rounded border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            {topic}
+                          </GeoLink>
+                        ))}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <span className="font-medium">Example questions:</span>
+                        <ul className="list-disc list-inside mt-1 space-y-0.5">
+                          {item.exampleQuestions.slice(0, 2).map((q, idx) => (
+                            <li key={idx}>{q}</li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded border ${getSentimentColor(narrative.sentiment)}`}>
-                    {narrative.sentiment}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {narrative.top_sources.map((source, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs px-2 py-1 rounded border bg-muted text-muted-foreground"
+                    <GeoLink
+                      href={`/intelligence/sources?domain=${encodeURIComponent(item.support.topDomains[0])}`}
+                      className="ml-4 text-xs text-blue-600 hover:text-blue-700 hover:underline whitespace-nowrap"
                     >
-                      {source}
-                    </span>
-                  ))}
+                      Open Sources →
+                    </GeoLink>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Recurring Questions */}
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">Recurring Questions</h3>
-          <div className="space-y-3">
-            {data.recurring_questions.map((item, i) => (
-              <div key={i} className="p-3 border rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <div className="text-sm mb-1">{item.question}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatNumber(item.frequency)} mentions
+        {selectedTab === 'descriptors' && (
+          <div className="rounded-lg border bg-card p-6">
+            <h3 className="text-lg font-semibold mb-4">Descriptors: {data.meta.brand} vs {data.meta.competitor}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Acme Column */}
+              <div>
+                <h4 className="font-semibold mb-3">{data.meta.brand}</h4>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-sm font-medium text-green-700 mb-2">Positive</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.acme.positive.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-green-50 text-green-700 border-green-200"
+                        >
+                          {desc}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={`text-xs px-2 py-1 rounded border capitalize cursor-help ${getRiskColor(item.risk)}`}>
-                        {item.risk} risk
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <p>Heuristic severity based on volume and negative sentiment signals. Read-only.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Source Breakdown Table */}
-      <div className="rounded-lg border bg-card">
-        <div className="p-4 border-b">
-          <h3 className="text-lg font-semibold">Source Breakdown</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium text-sm">Source</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Mentions</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Share</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Sentiment</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.source_breakdown.map((row, i) => (
-                <tr key={i} className="border-b hover:bg-muted/30">
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-medium">{row.source}</span>
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm">{formatNumber(row.mentions)}</td>
-                  <td className="py-3 px-4 text-right text-sm">{formatPercentage(row.share)}</td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs px-2 py-1 rounded border ${getSentimentColor(row.sentiment)}`}>
-                      {row.sentiment}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-sm text-muted-foreground cursor-help">
-                          {getTrendIcon(row.trend)}
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-2">Neutral</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.acme.neutral.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-muted/50 text-muted-foreground"
+                        >
+                          {desc}
                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p>{getTrendTooltip(row.trend)}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Competitor Voice Comparison Table */}
-      <div className="rounded-lg border bg-card">
-        <div className="p-4 border-b">
-          <h3 className="text-lg font-semibold">Competitor Voice Comparison</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium text-sm">Brand</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Mentions</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">SOV</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Sentiment</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Top Narrative</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.competitor_voice_comparison.map((row, i) => (
-                <tr key={i} className="border-b hover:bg-muted/30">
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-medium">{row.brand}</span>
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm">{formatNumber(row.mentions)}</td>
-                  <td className="py-3 px-4 text-right text-sm">{formatPercentage(row.sov)}</td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs px-2 py-1 rounded border ${getSentimentColor(row.sentiment)}`}>
-                      {row.sentiment}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm text-muted-foreground">{row.top_narrative}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Evidence Snippets */}
-      <div className="rounded-lg border bg-card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Evidence Snippets</h3>
-          <span className="text-xs px-2 py-1 rounded border bg-muted text-muted-foreground">
-            Anonymized
-          </span>
-        </div>
-        <div className="space-y-3">
-          {data.evidence_snippets.map((snippet, i) => (
-            <div key={i} className="p-3 border rounded-lg">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">{snippet.source}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(snippet.date).toLocaleDateString()}
-                  </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-red-700 mb-2">Negative</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.acme.negative.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-700 border-red-200"
+                        >
+                          {desc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">{snippet.text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Boundary footnote */}
-      <div className="pt-4 border-t">
-        <p className="text-xs text-muted-foreground text-center">
-          Read-only intelligence. Market Voice data is excluded from GEO Score calculation. No execution actions available.
-        </p>
-      </div>
+              {/* Rival Column */}
+              <div>
+                <h4 className="font-semibold mb-3">{data.meta.competitor}</h4>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-sm font-medium text-green-700 mb-2">Positive</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.rival.positive.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-green-50 text-green-700 border-green-200"
+                        >
+                          {desc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-600 mb-2">Neutral</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.rival.neutral.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-muted/50 text-muted-foreground"
+                        >
+                          {desc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-red-700 mb-2">Negative</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.descriptors.rival.negative.map((desc, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-700 border-red-200"
+                        >
+                          {desc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedTab === 'claims' && (
+          <div className="rounded-lg border bg-card">
+            <div className="p-4 border-b bg-muted/50">
+              <h3 className="text-lg font-semibold">Claims & Counterclaims</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Circulating claims about {data.meta.brand} and how they're supported or challenged in AI answers.
+              </p>
+            </div>
+            <div className="divide-y">
+              {data.claims.map((claim) => (
+                <div key={claim.claimId} className="p-4 hover:bg-muted/30">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium">{claim.claim}</span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded border capitalize ${getStanceBadgeClass(claim.stance)}`}
+                        >
+                          {claim.stance}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">Cited domains:</span>
+                        {claim.citedDomains.map((domain, idx) => (
+                          <GeoLink
+                            key={idx}
+                            href={`/intelligence/sources?domain=${encodeURIComponent(domain)}`}
+                            className="text-xs px-2 py-0.5 rounded border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            {domain}
+                          </GeoLink>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">Patterns:</span>
+                        <PatternChips patternIds={claim.patterns} topN={3} size="sm" />
+                      </div>
+                      {expandedClaims.has(claim.claimId) && (
+                        <div className="mt-3 space-y-2 pl-4 border-l-2 border-muted">
+                          <div>
+                            <div className="text-xs font-medium text-muted-foreground mb-1">Example questions:</div>
+                            <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
+                              {claim.exampleQuestions.map((q, idx) => (
+                                <li key={idx}>{q}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-muted-foreground mb-1">Notes:</div>
+                            <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
+                              {claim.notes.map((note, idx) => (
+                                <li key={idx}>{note}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4 flex flex-col gap-2">
+                      <button
+                        onClick={() => toggleClaim(claim.claimId)}
+                        className="text-xs text-blue-600 hover:text-blue-700 hover:underline whitespace-nowrap"
+                      >
+                        {expandedClaims.has(claim.claimId) ? 'Collapse' : 'Expand'} ↓
+                      </button>
+                      <GeoLink
+                        href={`/execution-prep/content-specs?fromClaim=${claim.claimId}`}
+                        className="text-xs text-blue-600 hover:text-blue-700 hover:underline whitespace-nowrap"
+                      >
+                        Create Content Spec →
+                      </GeoLink>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Boundary footnote */}
+        <div className="pt-4 border-t">
+          <p className="text-xs text-muted-foreground text-center">
+            Read-only narrative mining. Designed to support Content Spec creation. No execution actions available.
+          </p>
+        </div>
       </div>
     </TooltipProvider>
   );

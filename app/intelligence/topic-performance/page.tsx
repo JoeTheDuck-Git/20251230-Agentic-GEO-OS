@@ -13,11 +13,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getTopicPerformanceMeta } from '@/lib/geo/meta/geoMeta';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { useSearchParams } from 'next/navigation';
+import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 type SortOption = 'visibility_desc' | 'reach_desc' | 'position_asc' | 'name_asc';
 
 export default function TopicPerformancePage() {
   const data = topicPerformanceDemo;
+  const searchParams = useSearchParams();
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getTopicPerformanceMeta(geoQueryState);
   const primaryBrand = data.meta.brand; // 'Acme Corp'
   const [topicSearch, setTopicSearch] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('visibility_desc');
@@ -116,11 +125,26 @@ export default function TopicPerformancePage() {
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Topic Performance</h1>
-          <p className="text-muted-foreground mt-2">
-            Topic-level Reach and Position analysis (read-only).
-          </p>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold">Topic Performance</h1>
+              <p className="text-muted-foreground mt-2">
+                Topic-level Reach and Position analysis (read-only).
+              </p>
+            </div>
+            <GeoPageActions
+              exportContext={{
+                title: 'Topic Performance',
+                description: 'Export includes topic metrics, reach, position, and pattern coverage.',
+              }}
+            />
+          </div>
         </div>
+
+        <GeoGlobalFilters />
+
+        {/* Data Freshness */}
+        <GeoDataFreshness {...freshnessMeta} />
 
         {/* Read-only banner */}
         <div className="rounded-lg border bg-muted/50 p-4">

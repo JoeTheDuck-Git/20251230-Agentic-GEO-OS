@@ -6,12 +6,28 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { executionBriefsDemo } from '@/lib/demo/geo-os/execution-briefs';
 import { contentSpecsDemo } from '@/lib/demo/geo-os/content-specs';
 import { PatternChips } from '@/components/geo/PatternChips';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { GeoLink } from '@/components/geo/GeoLink';
+import { GeoJourneyHint } from '@/components/geo/GeoJourneyHint';
+import { assetIdFromBrief } from '@/lib/geo/measurement/mapToAsset';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getExecutionBriefsMeta } from '@/lib/geo/meta/geoMeta';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { GeoEmptyState } from '@/components/geo/states/GeoEmptyState';
+import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
+import { FileXIcon } from '@/components/geo/states/GeoEmptyState';
+import { GeoInlineNotice } from '@/components/geo/states/GeoInlineNotice';
+import { INLINE_NOTICE_COPY } from '@/lib/geo/states/stateCopy';
+import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 function ExecutionBriefsContent() {
   const data = executionBriefsDemo;
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getExecutionBriefsMeta(geoQueryState);
   const fromItemId = searchParams.get('from');
   const briefId = searchParams.get('brief');
   
@@ -92,19 +108,42 @@ function ExecutionBriefsContent() {
     <div className="container mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Execution Briefs</h1>
-        <p className="text-muted-foreground mt-2">
-          Execution-ready context derived from approved decision prompts. Read-only.
-        </p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold">Execution Briefs</h1>
+            <p className="text-muted-foreground mt-2">
+              Execution-ready context derived from approved decision prompts. Read-only.
+            </p>
+            <div className="mt-2">
+              <GeoJourneyHint />
+            </div>
+          </div>
+          <GeoPageActions
+            exportContext={{
+              title: 'Execution Briefs',
+              description: 'Export includes brief details, constraints, and governance status.',
+            }}
+          />
+        </div>
       </div>
+
+      <GeoGlobalFilters />
+
+      {/* Data Freshness */}
+      <GeoDataFreshness {...freshnessMeta} />
 
       {/* Not found notice */}
       {showNotFoundNotice && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            {notFoundMessage}
-          </p>
-        </div>
+        <GeoEmptyState
+          title={EMPTY_STATE_COPY.BRIEF_NOT_FOUND.TITLE}
+          description={EMPTY_STATE_COPY.BRIEF_NOT_FOUND.DESC}
+          icon={<FileXIcon className="h-12 w-12 text-muted-foreground" />}
+          actions={[
+            { label: 'Back to Opportunities', href: '/decisions/opportunity-analysis', variant: 'default' },
+            { label: 'View Actionable Items', href: '/decisions/actionable-items', variant: 'outline' },
+          ]}
+          note="Showing available briefs below."
+        />
       )}
 
       {/* List + Detail Layout */}
@@ -131,13 +170,13 @@ function ExecutionBriefsContent() {
                         <span className="text-xs text-orange-600 mt-1 block">⚠ Warning</span>
                       )}
                     </div>
-                    <Link
+                    <GeoLink
                       href={`/execution-prep/content-specs?fromBrief=${brief.brief_id}`}
                       onClick={(e) => e.stopPropagation()}
                       className="ml-2 text-xs text-blue-600 hover:text-blue-700 hover:underline whitespace-nowrap"
                     >
                       Open Spec →
-                    </Link>
+                    </GeoLink>
                   </div>
                 </button>
               ))}
@@ -197,18 +236,47 @@ function ExecutionBriefsContent() {
                   )}
                 </div>
                 <div className="flex gap-3">
-                  <Link
+                  <GeoLink
                     href={`/execution-prep/content-specs?fromBrief=${selectedBrief.brief_id}`}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors font-medium"
                   >
                     Open Content Spec
-                  </Link>
-                  <Link
+                  </GeoLink>
+                  <GeoLink
                     href="/execution-prep/content-specs"
                     className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-md text-sm hover:bg-blue-50 transition-colors"
                   >
                     View Specs Library
-                  </Link>
+                  </GeoLink>
+                  {(() => {
+                    const mappedAssetId = assetIdFromBrief(selectedBrief.brief_id);
+                    if (mappedAssetId) {
+                      return (
+                        <GeoLink
+                          href={`/measurement/content-performance?asset=${mappedAssetId}`}
+                          className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-md text-sm hover:bg-blue-50 transition-colors"
+                        >
+                          View Measurement →
+                        </GeoLink>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled
+                          className="px-4 py-2 bg-muted text-muted-foreground border border-muted rounded-md text-sm cursor-not-allowed opacity-50"
+                        >
+                          View Measurement
+                        </button>
+                        <GeoInlineNotice
+                          tone="warning"
+                          label={INLINE_NOTICE_COPY.MISSING_MAPPING.LABEL}
+                          tooltipTitle={INLINE_NOTICE_COPY.MISSING_MAPPING.TOOLTIP_TITLE}
+                          tooltipBody={INLINE_NOTICE_COPY.MISSING_MAPPING.TOOLTIP_BODY}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -306,18 +374,18 @@ function ExecutionBriefsContent() {
               {/* Navigation CTAs */}
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center justify-between">
-                  <Link
+                  <GeoLink
                     href={`/execution-prep/content-planning?brief=${selectedBrief.brief_id}`}
                     className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
                     View Content Planning →
-                  </Link>
-                  <Link
+                  </GeoLink>
+                  <GeoLink
                     href="/decisions/actionable-items"
                     className="text-sm text-muted-foreground hover:text-foreground hover:underline"
                   >
                     Back to Actionable Items
-                  </Link>
+                  </GeoLink>
                 </div>
               </div>
 

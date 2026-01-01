@@ -9,9 +9,11 @@ const navigation = [
     group: 'Intelligence',
     items: [
       { label: 'GEO Overview', href: '/intelligence/geo-overview' },
+      { label: 'Sources', href: '/intelligence/sources' },
       { label: 'Topic Performance', href: '/intelligence/topic-performance' },
       { label: 'Competitor Intelligence', href: '/intelligence/competitor-intelligence' },
       { label: 'Market Voice', href: '/intelligence/market-voice' },
+      { label: 'Alerts', href: '/intelligence/alerts' },
     ],
   },
   {
@@ -34,6 +36,12 @@ const navigation = [
     items: [
       { label: 'Content Performance', href: '/measurement/content-performance' },
       { label: 'Traffic & Engagement', href: '/measurement/traffic-engagement' },
+    ],
+  },
+  {
+    group: 'Settings',
+    items: [
+      { label: 'Watchlist', href: '/settings/watchlist' },
     ],
   },
 ];

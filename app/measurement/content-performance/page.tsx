@@ -1,28 +1,60 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { contentPerformanceDemo } from '@/lib/demo/geo-os/measurement/content-performance';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { measurementDemo, ContentAsset } from '@/lib/demo/geo/measurement.demo';
+import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
+import { GeoLink } from '@/components/geo/GeoLink';
+import { GeoJourneyHint } from '@/components/geo/GeoJourneyHint';
+import { parseAssetId, defaultAssetId, filterAssetsByQuery } from '@/lib/geo/measurement/assetSelection';
+import { parseGeoQuery } from '@/lib/geo/query/geoQuery';
+import { MetricDeltaSimple } from '@/components/geo/MetricDeltaSimple';
+import { PatternChips } from '@/components/geo/PatternChips';
+import { GeoDataFreshness } from '@/components/geo/GeoDataFreshness';
+import { getMeasurementMeta } from '@/lib/geo/meta/geoMeta';
+import { GeoEmptyState } from '@/components/geo/states/GeoEmptyState';
+import { EMPTY_STATE_COPY } from '@/lib/geo/states/stateCopy';
+import { FileXIcon } from '@/components/geo/states/GeoEmptyState';
+import { GeoPageActions } from '@/components/geo/GeoPageActions';
 
 export default function ContentPerformancePage() {
-  const data = contentPerformanceDemo;
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
-  // View-only filter state (local UI only)
-  const [selectedContent, setSelectedContent] = useState(data.filters.content_id);
-  const [selectedTimeRange, setSelectedTimeRange] = useState(data.filters.time_range);
-  const [selectedChannel, setSelectedChannel] = useState(data.filters.channel);
+  const assetIdFromUrl = parseAssetId(searchParams);
+  const geoQueryState = parseGeoQuery(searchParams);
+  const freshnessMeta = getMeasurementMeta(geoQueryState);
+  
+  const filteredAssets = useMemo(
+    () => filterAssetsByQuery(measurementDemo.assets, geoQueryState),
+    [geoQueryState]
+  );
+  
+  const defaultId = useMemo(() => defaultAssetId(filteredAssets), [filteredAssets]);
+  const selectedAssetId = assetIdFromUrl || defaultId;
+  
+  const selectedAsset = useMemo(
+    () => filteredAssets.find(a => a.id === selectedAssetId) || null,
+    [filteredAssets, selectedAssetId]
+  );
+  
+  const metrics = selectedAsset
+    ? measurementDemo.metricsByAsset[selectedAsset.id]
+    : null;
+
+  const updateAsset = (newAssetId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('asset', newAssetId);
+    router.replace(`/measurement/content-performance?${params.toString()}`, { scroll: false });
+  };
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num);
   };
 
-  const formatPercentage = (num: number) => {
-    return `${(num * 100).toFixed(1)}%`;
-  };
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}m ${secs}s`;
   };
 
@@ -30,133 +62,236 @@ export default function ContentPerformancePage() {
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Content Performance</h1>
-        <p className="text-muted-foreground mt-2">
-          Read-only measurement snapshot. Does not change decisions or briefs.
-        </p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold">Content Performance</h1>
+            <p className="text-muted-foreground mt-2">
+              Performance of generated content assets (demo GA4). Read-only.
+            </p>
+            <div className="mt-2">
+              <GeoJourneyHint />
+            </div>
+          </div>
+          <GeoPageActions
+            exportContext={{
+              title: 'Content Performance',
+              description: 'Export includes asset metrics, KPIs, and baseline comparisons.',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Filter Row (view-only local state) */}
+      <GeoGlobalFilters />
+
+      {/* Top Controls Row */}
       <div className="rounded-lg border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Content</label>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-muted-foreground">Content Asset:</label>
             <select
-              value={selectedContent}
-              onChange={(e) => setSelectedContent(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
+              value={selectedAssetId || ''}
+              onChange={(e) => updateAsset(e.target.value)}
+              className="px-3 py-1.5 text-sm border rounded-md bg-background min-w-[300px]"
             >
-              <option>All content</option>
-              {data.content_rows.map((row) => (
-                <option key={row.content_id} value={row.content_id}>
-                  {row.title}
+              {filteredAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.title} ({asset.status})
                 </option>
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Time Range</label>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-muted-foreground">Baseline:</label>
             <select
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
+              value="previous"
+              disabled
+              className="px-3 py-1.5 text-sm border rounded-md bg-muted text-muted-foreground"
             >
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Channel</label>
-            <select
-              value={selectedChannel}
-              onChange={(e) => setSelectedChannel(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-lg bg-background"
-            >
-              <option>GA4 (demo)</option>
-              <option>Organic</option>
-              <option>Direct</option>
-              <option>Referral</option>
+              <option>Previous period (same duration)</option>
             </select>
           </div>
         </div>
-        {/* Source disclosure */}
         <div className="mt-3 pt-3 border-t">
-          <p className="text-xs text-muted-foreground">
-            Source: GA4 (demo) · Snapshot-based
-          </p>
+          <GeoDataFreshness {...freshnessMeta} />
         </div>
       </div>
 
-      {/* KPI Row (4 cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-lg border bg-card p-6">
-          <div className="text-sm font-medium text-muted-foreground mb-2">Pageviews</div>
-          <div className="text-3xl font-bold">{formatNumber(data.kpis.pageviews)}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="text-sm font-medium text-muted-foreground mb-2">Sessions</div>
-          <div className="text-3xl font-bold">{formatNumber(data.kpis.sessions)}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="text-sm font-medium text-muted-foreground mb-2">Engagement Rate</div>
-          <div className="text-3xl font-bold">{formatPercentage(data.kpis.engagement_rate)}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <div className="text-sm font-medium text-muted-foreground mb-2">Avg Time on Page</div>
-          <div className="text-3xl font-bold">{formatTime(data.kpis.avg_time_on_page_sec)}</div>
-        </div>
-      </div>
-
-      {/* Content Table */}
-      <div className="rounded-lg border bg-card">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Content Performance</h2>
-            <p className="text-xs text-muted-foreground">Showing top 5 items (demo).</p>
+      {selectedAsset && metrics ? (
+        <>
+          {/* KPI Cards with Deltas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-lg border bg-card p-6">
+              <div className="text-sm font-medium text-muted-foreground mb-2">Sessions</div>
+              <div className="text-3xl font-bold">{formatNumber(metrics.current.sessions)}</div>
+              <div className="mt-2">
+                <MetricDeltaSimple
+                  current={metrics.current.sessions}
+                  baseline={metrics.baseline.sessions}
+                  format="number"
+                  higherIsBetter={true}
+                />
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card p-6">
+              <div className="text-sm font-medium text-muted-foreground mb-2">Clicks</div>
+              <div className="text-3xl font-bold">{formatNumber(metrics.current.clicks)}</div>
+              <div className="mt-2">
+                <MetricDeltaSimple
+                  current={metrics.current.clicks}
+                  baseline={metrics.baseline.clicks}
+                  format="number"
+                  higherIsBetter={true}
+                />
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card p-6">
+              <div className="text-sm font-medium text-muted-foreground mb-2">Avg Engagement Time</div>
+              <div className="text-3xl font-bold">{formatTime(metrics.current.avgEngagementTimeSec)}</div>
+              <div className="mt-2">
+                <MetricDeltaSimple
+                  current={metrics.current.avgEngagementTimeSec}
+                  baseline={metrics.baseline.avgEngagementTimeSec}
+                  format="time"
+                  higherIsBetter={true}
+                />
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card p-6">
+              <div className="text-sm font-medium text-muted-foreground mb-2">Conversions</div>
+              <div className="text-3xl font-bold">{formatNumber(metrics.current.conversions)}</div>
+              <div className="mt-2">
+                <MetricDeltaSimple
+                  current={metrics.current.conversions}
+                  baseline={metrics.baseline.conversions}
+                  format="number"
+                  higherIsBetter={true}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium text-sm">Content</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Linked Brief</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Sessions</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Engagement Rate</th>
-                <th className="text-right py-3 px-4 font-medium text-sm">Avg Time</th>
-                <th className="text-left py-3 px-4 font-medium text-sm">Last Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.content_rows.map((row) => (
-                <tr key={row.content_id} className="border-b hover:bg-muted/30">
-                  <td className="py-3 px-4">
-                    <div>
-                      <div className="font-medium text-sm">{row.title}</div>
-                      <div className="text-xs text-muted-foreground">{row.url_path}</div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Link
-                      href={`/execution-prep/execution-briefs?brief=${row.brief_id}`}
-                      className="inline-block text-xs px-2 py-1 rounded border bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: Tables */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Top Queries Table */}
+              <div className="rounded-lg border bg-card">
+                <div className="p-4 border-b bg-muted/50">
+                  <h3 className="text-lg font-semibold">Top Queries</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left py-3 px-4 font-medium text-sm">Query</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Clicks</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">CTR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.current.topQueries.map((query, idx) => (
+                        <tr key={idx} className="border-b hover:bg-muted/30">
+                          <td className="py-3 px-4 text-sm">{query.query}</td>
+                          <td className="py-3 px-4 text-right text-sm">{formatNumber(query.clicks)}</td>
+                          <td className="py-3 px-4 text-right text-sm">{query.ctrPct.toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Top Channels Table */}
+              <div className="rounded-lg border bg-card">
+                <div className="p-4 border-b bg-muted/50">
+                  <h3 className="text-lg font-semibold">Top Channels</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left py-3 px-4 font-medium text-sm">Channel</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Sessions</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Share</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.current.topChannels.map((channel, idx) => (
+                        <tr key={idx} className="border-b hover:bg-muted/30">
+                          <td className="py-3 px-4 text-sm">{channel.channel}</td>
+                          <td className="py-3 px-4 text-right text-sm">{formatNumber(channel.sessions)}</td>
+                          <td className="py-3 px-4 text-right text-sm">{channel.sharePct.toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Asset Details */}
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4">Asset Details</h3>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <div className="text-muted-foreground mb-1">Target URL</div>
+                  <div className="font-medium">{selectedAsset.targetUrl}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground mb-1">Topic</div>
+                  <div className="font-medium">{selectedAsset.topicName}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground mb-1">Pattern</div>
+                  <PatternChips patternIds={[selectedAsset.pattern]} topN={1} size="sm" />
+                </div>
+                <div>
+                  <div className="text-muted-foreground mb-1">Status</div>
+                  <span className="text-xs px-2 py-1 rounded border bg-muted/50 text-muted-foreground">
+                    {selectedAsset.status}
+                  </span>
+                </div>
+                {selectedAsset.createdFrom.briefId && (
+                  <div>
+                    <div className="text-muted-foreground mb-1">Created from Brief</div>
+                    <GeoLink
+                      href={`/execution-prep/execution-briefs?brief=${selectedAsset.createdFrom.briefId}`}
+                      className="text-blue-600 hover:text-blue-700 hover:underline text-sm"
                     >
-                      {row.brief_id}
-                    </Link>
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm">{formatNumber(row.sessions)}</td>
-                  <td className="py-3 px-4 text-right text-sm">{formatPercentage(row.engagement_rate)}</td>
-                  <td className="py-3 px-4 text-right text-sm">{formatTime(row.avg_time_on_page_sec)}</td>
-                  <td className="py-3 px-4 text-xs text-muted-foreground">
-                    {new Date(row.last_updated).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      View Brief →
+                    </GeoLink>
+                  </div>
+                )}
+                {selectedAsset.createdFrom.specId && (
+                  <div>
+                    <div className="text-muted-foreground mb-1">Created from Spec</div>
+                    <GeoLink
+                      href={`/execution-prep/content-specs?spec=${selectedAsset.createdFrom.specId}`}
+                      className="text-blue-600 hover:text-blue-700 hover:underline text-sm"
+                    >
+                      View Spec →
+                    </GeoLink>
+                  </div>
+                )}
+                {selectedAsset.createdFrom.claimId && (
+                  <div>
+                    <div className="text-muted-foreground mb-1">Created from Claim</div>
+                    <span className="text-xs text-muted-foreground">{selectedAsset.createdFrom.claimId}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <GeoEmptyState
+          title={EMPTY_STATE_COPY.NO_ASSET_SELECTED.TITLE}
+          description={EMPTY_STATE_COPY.NO_ASSET_SELECTED.DESC}
+          icon={<FileXIcon className="h-12 w-12 text-muted-foreground" />}
+          actions={[
+            { label: 'Go to Content Specs', href: '/execution-prep/content-specs', variant: 'default' },
+          ]}
+        />
+      )}
 
       {/* Boundary footnote */}
       <div className="pt-4 border-t">
