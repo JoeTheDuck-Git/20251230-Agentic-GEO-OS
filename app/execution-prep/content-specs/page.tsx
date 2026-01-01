@@ -732,3 +732,21 @@ TBD - Spec not yet generated
   );
 }
 
+function ContentSpecsLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ContentSpecsPage() {
+  return (
+    <Suspense fallback={<ContentSpecsLoading />}>
+      <ContentSpecsContent />
+    </Suspense>
+  );
+}
+
