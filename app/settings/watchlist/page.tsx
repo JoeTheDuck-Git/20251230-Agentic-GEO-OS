@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { watchlistDemo } from '@/lib/demo/geo/watchlist.demo';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
 
-export default function WatchlistPage() {
+function WatchlistContent() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <GeoGlobalFilters />
@@ -94,6 +95,24 @@ export default function WatchlistPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function WatchlistLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function WatchlistPage() {
+  return (
+    <Suspense fallback={<WatchlistLoading />}>
+      <WatchlistContent />
+    </Suspense>
   );
 }
 

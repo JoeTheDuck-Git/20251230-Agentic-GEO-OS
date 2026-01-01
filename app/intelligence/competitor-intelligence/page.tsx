@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { competitorIntelligenceDemo } from '@/lib/demo/geo-os/competitor-intelligence';
 import {
   Tooltip,
@@ -12,7 +13,7 @@ import { MetricChip } from '@/components/geo/MetricChip';
 import { GapKey } from '@/lib/geo/driverDefinitions';
 import { GeoGlobalFilters } from '@/components/geo/GeoGlobalFilters';
 
-export default function CompetitorIntelligencePage() {
+function CompetitorIntelligenceContent() {
   const data = competitorIntelligenceDemo;
 
   return (
@@ -212,5 +213,23 @@ export default function CompetitorIntelligencePage() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function CompetitorIntelligenceLoading() {
+  return (
+    <div className="container mx-auto p-6">
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function CompetitorIntelligencePage() {
+  return (
+    <Suspense fallback={<CompetitorIntelligenceLoading />}>
+      <CompetitorIntelligenceContent />
+    </Suspense>
   );
 }
